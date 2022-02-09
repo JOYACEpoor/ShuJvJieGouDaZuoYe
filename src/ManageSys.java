@@ -5,8 +5,8 @@ import java.util.Scanner;
 public class ManageSys {
 
     private final File file = new File("src\\Data\\Map");
+    private final Scanner scanner = new Scanner(System.in);
     private HashMap<String, String> map;
-    private final Scanner scanner=new Scanner(System.in);
 
     ManageSys() {
         if (file.exists() && file.isFile()) {
@@ -22,24 +22,26 @@ public class ManageSys {
         new ManageSys().close();
     }
 
-    public boolean login(){
+    public boolean login() {
         System.out.println("请输入用户名");
         String username = scanner.nextLine();
         System.out.println("请输入密码");
         String password = scanner.nextLine();
         return login(username, password);
     }
+
     public boolean login(String username, String password) {
         return map.containsKey(username) && map.get(username).equals(password);
     }
 
-    public void register(){
+    public void register() {
         System.out.println("请输入用户名");
         String username = scanner.nextLine();
         System.out.println("请输入密码");
         String password = scanner.nextLine();
         System.out.println(register(username, password));
     }
+
     public boolean register(String username, String password) {
         if (!map.containsKey(username)) {
             map.put(username, password);
@@ -50,13 +52,14 @@ public class ManageSys {
         }
     }
 
-    public void delete(){
+    public void delete() {
         System.out.println("请输入用户名");
         String username = scanner.nextLine();
         System.out.println("请输入密码");
         String password = scanner.nextLine();
         System.out.println(delete(username, password));
     }
+
     public boolean delete(String username, String password) {
         if (map.containsKey(username) && map.get(username).equals(password)) {
             map.remove(username, password);

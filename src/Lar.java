@@ -19,17 +19,12 @@ public class Lar {
                                 case "放入" -> functionSys.add();
                                 case "取出" -> functionSys.remove();
                                 case "发送" -> functionSys.sendMessage();
-                                default -> {
-                                }
                             }
-
                         }
                     }
                     case "注册" -> manageSys.register();
                     case "注销" -> manageSys.delete();
                 }
-            }
-            default -> {
             }
         }
         functionSys.close();
