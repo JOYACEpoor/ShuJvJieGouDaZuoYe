@@ -1,88 +1,139 @@
-import Data.Cup;
+import Data.Flight;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class FunctionSys {
 
-    private final File file = new File("src\\Data\\Array");
-    private final Scanner scanner = new Scanner(System.in);
-    private ArrayList<Cup> array;
+    private static final FunctionSys functionSys = new FunctionSys();
+    private static final File file = new File("src\\Data\\Map");
+    private static final Scanner scanner = new Scanner(System.in);
+    private HashMap<Flight, Integer> map;
 
     FunctionSys() {
-        try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois1 = new ObjectInputStream(fis)) {
-            array = (ArrayList<Cup>) ois1.readObject();
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            map = (HashMap<Flight, Integer>) ois.readObject();
         } catch (Exception e) {
-            array = new ArrayList<>();
-            for(int i=0;i<10;i++)
-                array.add(new Cup());
+            map = new HashMap<>();
+            map.put(new Flight("MU5735", "B1791", "中国"), 100);
+            map.put(new Flight("JAL123", "JA8119", "日本"), 100);
         }
-    }
-
-    public static void main(String[] args) {
-        new FunctionSys().close();
-    }
-
-    public void add(){
-        System.out.println("请输入快递柜号");
-        int index=Integer.parseInt(scanner.nextLine());
-        System.out.println("请输入电话号码");
-        long phone=Long.parseLong(scanner.nextLine());
-        int code=new Random(new Date().getTime()).nextInt(100000000);
-        add(index,new Cup(checkSame(code),phone,false));
-    }
-    public void add(int index,Cup cup){
-        array.set(index-1,cup);
-    }
-
-    public void remove(){
-        System.out.println("请输入取件码");
-        remove(Long.parseLong(scanner.nextLine()));
-    }
-    public void remove(Long code){
-        for (int i=0;i<10;i++){
-            if(array.get(i).code==code) {
-                array.set(i, new Cup());
-                System.out.println("已成功取出");
-                return;
-            }
-        }
-        System.out.println("取件码错误");
-    }
-
-    public void search() {
-        for (int i = 0; i < 10; i++) {
-            if (array.get(i).flag)
-                System.out.println("第" + (i + 1) + "个格口可用");
-        }
-    }
-
-    public void sendMessage() {
-        for(int i=0;i<10;i++){
-            if(!array.get(i).flag)
-                System.out.println("快递柜号："+(i+1)+"\n"+"手机号："+array.get(i).phone+"\n"+"取件码："+array.get(i).code);
-        }
-    }
-
-    private int checkSame(int code){
-        for (int i=0;i<10;i++){
-            if(array.get(i).code==code) {
-                checkSame(new Random(new Date().getTime()).nextInt(100000000));
-            }
-        }
-        return code;
     }
 
     public void close() {
         scanner.close();
-        try (FileOutputStream fos = new FileOutputStream(file); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(array);
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(map);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    public void showAll() {
+        map.forEach((key, value) -> System.out.println(key.toString() + "\n" + "Tickets: " + value));
+    }
+
+    public void search(){
+        System.out.println("请输入目的地后按回车");
+        search(scanner.nextLine());
+    }
+    public void search(String endStation) {
+        LinkedList<Flight> list = new LinkedList<>();
+        map.forEach((key, value) -> {
+            if (Objects.equals(key.getEndStation(), endStation))
+                list.add(key);
+        });
+        if(list.isEmpty()){
+            System.out.println("未搜索到匹配结果！");
+            search();
+        }else {
+            list.forEach((flight -> {
+                System.out.println(flight + "\n" + "Tickets: " + map.get(flight));
+            }));
+        }
+    }
+
+    public void order(){
+        System.out.println("请输入航班号后按回车");
+        String flightCode = scanner.nextLine();
+        System.out.println("请输入订票数量后按回车");
+        Integer tickets = Integer.valueOf(scanner.nextLine());
+        order(flightCode,tickets);
+    }
+    public void order(String flightCode,Integer tickets){
+        Flight flight = null;
+        for(Map.Entry<Flight,Integer> entry : map.entrySet()){
+            if(entry.getKey().getFlightCode().equals(flightCode))
+                flight=entry.getKey();
+        }
+        if(flight!=null){
+            Integer i = map.get(flight);
+            if(i>tickets){
+                map.remove(flight);
+                map.put(flight,i-tickets);
+                System.out.println("OK");
+                showAll();
+            }else {
+                System.out.println("机票余量不足！");
+                order();
+            }
+        }else {
+            System.out.println("没有查询到航班，请确认后输入！");
+            order();
+        }
+    }
+
+    public void reOrder(){
+        System.out.println("请输入航班号后按回车");
+        String flightCode = scanner.nextLine();
+        System.out.println("请输入退票数量后按回车");
+        Integer tickets = Integer.valueOf(scanner.nextLine());
+        reOrder(flightCode,tickets);
+    }
+    public void reOrder(String flightCode,Integer tickets){
+        Flight flight = null;
+        for(Map.Entry<Flight,Integer> entry : map.entrySet()){
+            if(entry.getKey().getFlightCode().equals(flightCode))
+                flight=entry.getKey();
+        }
+        if(flight!=null){
+            Integer i = map.get(flight);
+            map.remove(flight);
+            map.put(flight,i+tickets);
+            System.out.println("OK");
+            showAll();
+        }else {
+            System.out.println("没有查询到航班，请确认后输入！");
+            reOrder();
+        }
+    }
+
+    public void modify(){
+        System.out.println("请输入航班信息");
+        System.out.println("请输入航班号后回车");
+        String flightCode = scanner.nextLine();
+        System.out.println("请输入飞机编号后回车");
+        String planeCode = scanner.nextLine();
+        System.out.println("请输入终点后回车");
+        String endStation = scanner.nextLine();
+        System.out.println("请输入可用票数后回车");
+        Integer tickets = Integer.valueOf(scanner.nextLine());
+        modify(flightCode,planeCode,endStation,tickets);
+    }
+    public void modify(String flightCode, String planeCode, String endStation, Integer tickets){
+        Flight flight = null;
+        for(Map.Entry<Flight,Integer> entry : map.entrySet()){
+            if(entry.getKey().getFlightCode().equals(flightCode))
+                flight=entry.getKey();
+        }
+        if(flight!=null){
+            map.remove(flight);
+            map.put(new Flight(flightCode,planeCode,endStation),tickets);
+            System.out.println("OK");
+            showAll();
+        }else{
+            System.out.println("没有查询到航班，请确认后输入！");
+            modify();
+        }
+    }
 }
